@@ -93,6 +93,35 @@ class AIAnalysisResult(BaseModel):
     funding_velocity: float
     creator_credibility: float
 
+class AlertSettings(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str = "default_user"  # For future multi-user support
+    notification_frequency: str = "instant"  # 'instant', 'daily', 'weekly'
+    min_funding_velocity: float = 0.1  # Minimum funding speed threshold
+    preferred_categories: List[str] = ["Technology"]
+    max_risk_level: str = "medium"  # 'low', 'medium', 'high'
+    min_success_probability: float = 0.6
+    browser_notifications: bool = True
+    email_notifications: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ProjectAlert(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    project_id: str
+    alert_type: str  # 'high_potential', 'funding_surge', 'deadline_approaching'
+    message: str
+    priority: str = "medium"  # 'low', 'medium', 'high'
+    is_read: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class AnalyticsData(BaseModel):
+    roi_prediction: float
+    funding_velocity: float
+    market_sentiment: float
+    diversification_score: float
+    risk_adjusted_return: float
+    recommended_actions: List[str]
+
 # AI Analysis Functions
 async def analyze_project_with_ai(project: KickstarterProject) -> AIAnalysisResult:
     """Analyze project using GPT-4 for qualitative insights"""
