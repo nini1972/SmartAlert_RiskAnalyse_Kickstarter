@@ -365,6 +365,127 @@ class KickstarterAPITester:
             
         return True
 
+    def test_smart_alerts(self):
+        """Test getting smart alerts"""
+        response = requests.get(f"{self.base_url}/alerts")
+        if response.status_code != 200:
+            print(f"  Error: Expected status 200, got {response.status_code}")
+            return False
+        
+        alerts = response.json()
+        if not isinstance(alerts, list):
+            print(f"  Error: Expected list response, got {type(alerts)}")
+            return False
+            
+        # Check alert structure if any alerts exist
+        if alerts:
+            required_fields = ["id", "project_id", "alert_type", "message", "priority", "is_read", "created_at"]
+            for field in required_fields:
+                if field not in alerts[0]:
+                    print(f"  Error: Alert missing '{field}' field")
+                    return False
+                    
+            # Verify priority values are valid
+            valid_priorities = ["high", "medium", "low"]
+            for alert in alerts:
+                if alert["priority"] not in valid_priorities:
+                    print(f"  Error: Invalid priority '{alert['priority']}' in alert")
+                    return False
+        
+        print(f"  Found {len(alerts)} alerts")
+        return True
+        
+    def test_alert_settings(self):
+        """Test getting and updating alert settings"""
+        # Get current settings
+        response = requests.get(f"{self.base_url}/alerts/settings")
+        if response.status_code != 200:
+            print(f"  Error: Expected status 200, got {response.status_code}")
+            return False
+        
+        settings = response.json()
+        required_fields = ["notification_frequency", "min_funding_velocity", "preferred_categories", 
+                          "max_risk_level", "min_success_probability", "browser_notifications"]
+                          
+        for field in required_fields:
+            if field not in settings:
+                print(f"  Error: Settings missing '{field}' field")
+                return False
+        
+        # Update settings
+        updated_settings = settings.copy()
+        updated_settings["notification_frequency"] = "daily"
+        updated_settings["min_funding_velocity"] = 0.2
+        updated_settings["max_risk_level"] = "high"
+        
+        response = requests.post(f"{self.base_url}/alerts/settings", json=updated_settings)
+        if response.status_code != 200:
+            print(f"  Error: Expected status 200 for settings update, got {response.status_code}")
+            print(f"  Response: {response.text}")
+            return False
+        
+        # Verify settings were updated
+        response = requests.get(f"{self.base_url}/alerts/settings")
+        if response.status_code != 200:
+            print(f"  Error: Failed to get updated settings, status {response.status_code}")
+            return False
+            
+        new_settings = response.json()
+        if new_settings["notification_frequency"] != updated_settings["notification_frequency"]:
+            print(f"  Error: Setting not updated correctly. Expected '{updated_settings['notification_frequency']}', got '{new_settings['notification_frequency']}'")
+            return False
+            
+        return True
+        
+    def test_advanced_analytics(self):
+        """Test getting advanced analytics"""
+        response = requests.get(f"{self.base_url}/analytics/advanced")
+        if response.status_code != 200:
+            print(f"  Error: Expected status 200, got {response.status_code}")
+            return False
+        
+        analytics = response.json()
+        required_fields = ["roi_prediction", "funding_velocity", "market_sentiment", 
+                          "diversification_score", "risk_adjusted_return", "recommended_actions"]
+                          
+        for field in required_fields:
+            if field not in analytics:
+                print(f"  Error: Analytics missing '{field}' field")
+                return False
+                
+        if not isinstance(analytics["recommended_actions"], list):
+            print(f"  Error: Expected 'recommended_actions' to be a list, got {type(analytics['recommended_actions'])}")
+            return False
+            
+        return True
+        
+    def test_funding_trends(self):
+        """Test getting funding trends data"""
+        response = requests.get(f"{self.base_url}/analytics/funding-trends")
+        if response.status_code != 200:
+            print(f"  Error: Expected status 200, got {response.status_code}")
+            return False
+        
+        data = response.json()
+        if "trends" not in data:
+            print("  Error: Response missing 'trends' field")
+            return False
+            
+        if not isinstance(data["trends"], list):
+            print(f"  Error: Expected 'trends' to be a list, got {type(data['trends'])}")
+            return False
+            
+        # Check trend data structure if any trends exist
+        if data["trends"]:
+            required_fields = ["name", "velocity", "success_probability", "pledged_percentage", "risk_level", "category"]
+            for field in required_fields:
+                if field not in data["trends"][0]:
+                    print(f"  Error: Trend data missing '{field}' field")
+                    return False
+        
+        print(f"  Found {len(data['trends'])} trend entries")
+        return True
+    
     def run_all_tests(self):
         """Run all tests in sequence"""
         tests = [
@@ -377,6 +498,10 @@ class KickstarterAPITester:
             ("Get Investments by Project", self.test_get_investments_by_project),
             ("Dashboard Statistics", self.test_dashboard_stats),
             ("AI Recommendations", self.test_ai_recommendations),
+            ("Smart Alerts", self.test_smart_alerts),
+            ("Alert Settings", self.test_alert_settings),
+            ("Advanced Analytics", self.test_advanced_analytics),
+            ("Funding Trends", self.test_funding_trends),
             ("Update Project", self.test_update_project),
             ("Delete Project", self.test_delete_project),
             ("Error Handling", self.test_error_handling)
