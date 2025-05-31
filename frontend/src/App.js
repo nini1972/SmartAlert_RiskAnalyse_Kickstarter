@@ -26,9 +26,14 @@ function App() {
   const [investments, setInvestments] = useState([]);
   const [dashboardStats, setDashboardStats] = useState({});
   const [recommendations, setRecommendations] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [advancedAnalytics, setAdvancedAnalytics] = useState({});
+  const [fundingTrends, setFundingTrends] = useState([]);
+  const [alertSettings, setAlertSettings] = useState({});
   const [loading, setLoading] = useState(false);
   const [showAddProject, setShowAddProject] = useState(false);
   const [showAddInvestment, setShowAddInvestment] = useState(false);
+  const [showAlertSettings, setShowAlertSettings] = useState(false);
 
   // Form states
   const [newProject, setNewProject] = useState({
@@ -56,6 +61,15 @@ function App() {
 
   useEffect(() => {
     fetchDashboardData();
+    fetchAlerts();
+    fetchAdvancedAnalytics();
+    fetchFundingTrends();
+    fetchAlertSettings();
+    
+    // Set up browser notifications
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
   }, []);
 
   const fetchDashboardData = async () => {
@@ -75,6 +89,52 @@ function App() {
       console.error('Dashboard fetch error:', error);
     }
     setLoading(false);
+  };
+
+  const fetchAlerts = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/alerts`);
+      setAlerts(response.data);
+      
+      // Show browser notifications for high priority alerts
+      response.data.forEach(alert => {
+        if (alert.priority === 'high' && "Notification" in window && Notification.permission === "granted") {
+          new Notification("🚀 Investment Alert!", {
+            body: alert.message,
+            icon: '/favicon.ico'
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Failed to fetch alerts:', error);
+    }
+  };
+
+  const fetchAdvancedAnalytics = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/analytics/advanced`);
+      setAdvancedAnalytics(response.data);
+    } catch (error) {
+      console.error('Failed to fetch advanced analytics:', error);
+    }
+  };
+
+  const fetchFundingTrends = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/analytics/funding-trends`);
+      setFundingTrends(response.data.trends || []);
+    } catch (error) {
+      console.error('Failed to fetch funding trends:', error);
+    }
+  };
+
+  const fetchAlertSettings = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/alerts/settings`);
+      setAlertSettings(response.data);
+    } catch (error) {
+      console.error('Failed to fetch alert settings:', error);
+    }
   };
 
   const fetchRecommendations = async () => {
@@ -116,6 +176,8 @@ function App() {
         status: 'live'
       });
       fetchDashboardData();
+      fetchAlerts(); // Refresh alerts after adding project
+      fetchAdvancedAnalytics(); // Refresh analytics
     } catch (error) {
       toast.error('Failed to add project');
       console.error('Add project error:', error);
@@ -146,10 +208,23 @@ function App() {
         reward_tier: ''
       });
       fetchDashboardData();
+      fetchAdvancedAnalytics(); // Refresh analytics after adding investment
     } catch (error) {
       toast.error('Failed to add investment');
     }
     setLoading(false);
+  };
+
+  const handleUpdateAlertSettings = async (settings) => {
+    try {
+      await axios.post(`${BACKEND_URL}/api/alerts/settings`, settings);
+      setAlertSettings(settings);
+      toast.success('Alert settings updated!');
+      setShowAlertSettings(false);
+      fetchAlerts(); // Refresh alerts with new settings
+    } catch (error) {
+      toast.error('Failed to update alert settings');
+    }
   };
 
   const getRiskColor = (risk) => {
@@ -170,6 +245,24 @@ function App() {
     }
   };
 
+  const getAlertIcon = (alertType) => {
+    switch(alertType) {
+      case 'funding_surge': return '🚀';
+      case 'high_potential': return '⭐';
+      case 'deadline_approaching': return '⏰';
+      default: return '💡';
+    }
+  };
+
+  const getAlertPriorityColor = (priority) => {
+    switch(priority) {
+      case 'high': return 'border-red-200 bg-red-50';
+      case 'medium': return 'border-yellow-200 bg-yellow-50';
+      case 'low': return 'border-blue-200 bg-blue-50';
+      default: return 'border-gray-200 bg-gray-50';
+    }
+  };
+
   const riskColors = ['#10B981', '#F59E0B', '#EF4444'];
   const categoryColors = ['#3B82F6', '#8B5CF6', '#F59E0B', '#10B981', '#EF4444'];
 
@@ -182,10 +275,25 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <ArrowTrendingUpIcon className="h-8 w-8 text-indigo-600 mr-3" />
+              <TrendingUpIcon className="h-8 w-8 text-indigo-600 mr-3" />
               <h1 className="text-2xl font-bold text-gray-900">Kickstarter Investment Tracker</h1>
+              {alerts.length > 0 && (
+                <div className="ml-4 flex items-center">
+                  <BellIcon className="h-6 w-6 text-red-500 animate-pulse" />
+                  <span className="ml-1 bg-red-500 text-white rounded-full px-2 py-1 text-xs font-bold">
+                    {alerts.length}
+                  </span>
+                </div>
+              )}
             </div>
             <div className="flex space-x-4">
+              <button
+                onClick={() => setShowAlertSettings(true)}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <Cog6ToothIcon className="h-4 w-4 mr-2" />
+                Alert Settings
+              </button>
               <button
                 onClick={() => setShowAddProject(true)}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -213,13 +321,15 @@ function App() {
               { id: 'dashboard', name: 'Dashboard', icon: ChartBarIcon },
               { id: 'projects', name: 'Projects', icon: ClockIcon },
               { id: 'investments', name: 'Investments', icon: BanknotesIcon },
+              { id: 'alerts', name: 'Smart Alerts', icon: BellIcon, badge: alerts.length },
+              { id: 'analytics', name: 'Advanced Analytics', icon: TrendingUpIcon },
               { id: 'calendar', name: 'Calendar', icon: CalendarIcon },
               { id: 'ai-insights', name: 'AI Insights', icon: LightBulbIcon }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center relative ${
                   activeTab === tab.id
                     ? 'border-indigo-500 text-indigo-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -227,6 +337,11 @@ function App() {
               >
                 <tab.icon className="h-5 w-5 mr-2" />
                 {tab.name}
+                {tab.badge > 0 && (
+                  <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs font-bold">
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -275,7 +390,7 @@ function App() {
                 <div className="p-5">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
-                      <ArrowTrendingUpIcon className="h-6 w-6 text-gray-400" />
+                      <TrendingUpIcon className="h-6 w-6 text-gray-400" />
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <dl>
@@ -295,8 +410,8 @@ function App() {
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">Avg Investment</dt>
-                        <dd className="text-lg font-medium text-gray-900">${(dashboardStats.avg_investment || 0).toLocaleString()}</dd>
+                        <dt className="text-sm font-medium text-gray-500 truncate">Predicted ROI</dt>
+                        <dd className="text-lg font-medium text-gray-900">{advancedAnalytics.roi_prediction || 0}%</dd>
                       </dl>
                     </div>
                   </div>
@@ -359,6 +474,168 @@ function App() {
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'alerts' && (
+          <div className="px-4 py-6 sm:px-0">
+            <div className="bg-white shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">🔔 Smart Investment Alerts</h3>
+                  <button
+                    onClick={fetchAlerts}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    <BellIcon className="h-4 w-4 mr-2" />
+                    Refresh Alerts
+                  </button>
+                </div>
+                
+                {alerts.length > 0 ? (
+                  <div className="space-y-4">
+                    {alerts.map((alert, index) => (
+                      <div key={index} className={`border rounded-lg p-4 ${getAlertPriorityColor(alert.priority)}`}>
+                        <div className="flex items-start">
+                          <span className="text-2xl mr-3">{getAlertIcon(alert.alert_type)}</span>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                alert.priority === 'high' ? 'bg-red-100 text-red-800' :
+                                alert.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-blue-100 text-blue-800'
+                              }`}>
+                                {alert.priority} priority
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {format(new Date(alert.created_at), 'MMM dd, HH:mm')}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-sm text-gray-800">{alert.message}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <BellIcon className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No alerts yet</h3>
+                    <p className="mt-1 text-sm text-gray-500">We'll notify you when promising projects are detected.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'analytics' && (
+          <div className="px-4 py-6 sm:px-0">
+            <div className="space-y-6">
+              {/* Advanced Analytics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <TrendingUpIcon className="h-6 w-6 text-green-400" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">ROI Prediction</dt>
+                          <dd className="text-lg font-medium text-gray-900">{advancedAnalytics.roi_prediction || 0}%</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <ChartBarIcon className="h-6 w-6 text-blue-400" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Avg Funding Velocity</dt>
+                          <dd className="text-lg font-medium text-gray-900">{advancedAnalytics.funding_velocity || 0}%/day</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <LightBulbIcon className="h-6 w-6 text-yellow-400" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Market Sentiment</dt>
+                          <dd className="text-lg font-medium text-gray-900">{(advancedAnalytics.market_sentiment * 100 || 0).toFixed(0)}%</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <ChartBarIcon className="h-6 w-6 text-purple-400" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Diversification Score</dt>
+                          <dd className="text-lg font-medium text-gray-900">{(advancedAnalytics.diversification_score * 100 || 0).toFixed(0)}%</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Funding Trends Chart */}
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-6">📈 Funding Velocity vs Success Probability</h3>
+                  <ResponsiveContainer width="100%" height={400}>
+                    <BarChart data={fundingTrends}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="velocity" fill="#3B82F6" name="Funding Velocity (%/day)" />
+                      <Bar dataKey="success_probability" fill="#10B981" name="Success Probability (%)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* AI Recommendations */}
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">🤖 AI Portfolio Recommendations</h3>
+                  {advancedAnalytics.recommended_actions && advancedAnalytics.recommended_actions.length > 0 ? (
+                    <div className="space-y-3">
+                      {advancedAnalytics.recommended_actions.map((action, index) => (
+                        <div key={index} className="flex items-start">
+                          <span className="flex-shrink-0 h-6 w-6 text-indigo-600">💡</span>
+                          <p className="ml-3 text-sm text-gray-700">{action}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">Add investments to get personalized recommendations.</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -771,6 +1048,109 @@ function App() {
                     className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
                   >
                     {loading ? 'Adding...' : 'Add Investment'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Alert Settings Modal */}
+      {showAlertSettings && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Alert Settings</h3>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                handleUpdateAlertSettings(alertSettings);
+              }} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Notification Frequency</label>
+                  <select
+                    value={alertSettings.notification_frequency || 'instant'}
+                    onChange={(e) => setAlertSettings({...alertSettings, notification_frequency: e.target.value})}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="instant">Instant</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Min Funding Velocity (%)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={alertSettings.min_funding_velocity || 0.1}
+                      onChange={(e) => setAlertSettings({...alertSettings, min_funding_velocity: parseFloat(e.target.value)})}
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Min Success Probability (%)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="1"
+                      value={alertSettings.min_success_probability || 0.6}
+                      onChange={(e) => setAlertSettings({...alertSettings, min_success_probability: parseFloat(e.target.value)})}
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Max Risk Level</label>
+                  <select
+                    value={alertSettings.max_risk_level || 'medium'}
+                    onChange={(e) => setAlertSettings({...alertSettings, max_risk_level: e.target.value})}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="low">Low Risk Only</option>
+                    <option value="medium">Medium Risk & Below</option>
+                    <option value="high">All Risk Levels</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={alertSettings.browser_notifications !== false}
+                      onChange={(e) => setAlertSettings({...alertSettings, browser_notifications: e.target.checked})}
+                      className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Browser Notifications</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={alertSettings.email_notifications === true}
+                      onChange={(e) => setAlertSettings({...alertSettings, email_notifications: e.target.checked})}
+                      className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Email Notifications</span>
+                  </label>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowAlertSettings(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    Save Settings
                   </button>
                 </div>
               </form>
