@@ -8,7 +8,7 @@ import {
   CheckCircleIcon,
   ClockIcon,
   BanknotesIcon,
-  TrendingUpIcon,
+  ArrowTrendingUpIcon,
   LightBulbIcon,
   BellIcon,
   Cog6ToothIcon
