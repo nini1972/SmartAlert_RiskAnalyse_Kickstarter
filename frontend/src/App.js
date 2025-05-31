@@ -322,7 +322,7 @@ function App() {
               { id: 'projects', name: 'Projects', icon: ClockIcon },
               { id: 'investments', name: 'Investments', icon: BanknotesIcon },
               { id: 'alerts', name: 'Smart Alerts', icon: BellIcon, badge: alerts.length },
-              { id: 'analytics', name: 'Advanced Analytics', icon: TrendingUpIcon },
+              { id: 'analytics', name: 'Advanced Analytics', icon: ArrowTrendingUpIcon },
               { id: 'calendar', name: 'Calendar', icon: CalendarIcon },
               { id: 'ai-insights', name: 'AI Insights', icon: LightBulbIcon }
             ].map((tab) => (
