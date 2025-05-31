@@ -8,10 +8,12 @@ import {
   CheckCircleIcon,
   ClockIcon,
   BanknotesIcon,
-  ArrowTrendingUpIcon,
-  LightBulbIcon
+  TrendingUpIcon,
+  LightBulbIcon,
+  BellIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline';
-import { LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { format } from 'date-fns';
 import toast, { Toaster } from 'react-hot-toast';
 import './App.css';
