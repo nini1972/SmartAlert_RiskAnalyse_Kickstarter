@@ -108,7 +108,7 @@ async def analyze_project_with_ai(project: KickstarterProject) -> AIAnalysisResu
         Pledged: ${project.pledged_amount:,.2f}
         Backers: {project.backers_count}
         Status: {project.status}
-        Days remaining: {(project.deadline - datetime.utcnow()).days}
+        Days remaining: {(project.deadline.replace(tzinfo=None) - datetime.utcnow()).days if hasattr(project.deadline, 'replace') else 'N/A'}
         
         Provide analysis in this JSON format:
         {{
