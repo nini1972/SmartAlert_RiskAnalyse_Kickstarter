@@ -507,6 +507,109 @@ async def get_ai_recommendations():
     except Exception as e:
         return {"recommendations": ["Unable to generate recommendations at this time"], "error": str(e)}
 
+@api_router.get("/alerts", response_model=List[ProjectAlert])
+async def get_smart_alerts():
+    """Get smart alerts for promising projects"""
+    try:
+        # Get default alert settings (in a real app, this would be user-specific)
+        default_settings = AlertSettings()
+        
+        # Get active projects
+        projects = await db.projects.find({"status": "live"}).to_list(100)
+        
+        all_alerts = []
+        for project in projects:
+            project_obj = KickstarterProject(**project)
+            alerts = await generate_project_alerts(project_obj, default_settings)
+            all_alerts.extend(alerts)
+        
+        # Sort by priority and creation time
+        priority_order = {"high": 3, "medium": 2, "low": 1}
+        all_alerts.sort(key=lambda x: (priority_order.get(x.priority, 0), x.created_at), reverse=True)
+        
+        return all_alerts[:10]  # Return top 10 alerts
+    except Exception as e:
+        logging.error(f"Failed to generate alerts: {e}")
+        return []
+
+@api_router.get("/analytics/advanced", response_model=AnalyticsData)
+async def get_advanced_analytics():
+    """Get advanced portfolio analytics with ROI predictions"""
+    try:
+        # Get all projects and investments
+        projects = await db.projects.find({}).to_list(100)
+        investments = await db.investments.find({}).to_list(100)
+        
+        # Convert to Pydantic models
+        project_objects = [KickstarterProject(**p) for p in projects]
+        investment_objects = [Investment(**i) for i in investments]
+        
+        # Calculate analytics
+        analytics = await calculate_portfolio_analytics(project_objects, investment_objects)
+        return analytics
+    except Exception as e:
+        logging.error(f"Failed to calculate analytics: {e}")
+        return AnalyticsData(
+            roi_prediction=0.0,
+            funding_velocity=0.0,
+            market_sentiment=0.5,
+            diversification_score=0.0,
+            risk_adjusted_return=0.0,
+            recommended_actions=["Analytics calculation failed"]
+        )
+
+@api_router.get("/analytics/funding-trends")
+async def get_funding_trends():
+    """Get funding trend data for charts"""
+    try:
+        projects = await db.projects.find({}).to_list(100)
+        
+        # Calculate funding velocities for trend analysis
+        trend_data = []
+        for project in projects:
+            project_obj = KickstarterProject(**project)
+            velocity = await calculate_funding_velocity(project_obj)
+            
+            trend_data.append({
+                "name": project["name"][:20] + "..." if len(project["name"]) > 20 else project["name"],
+                "velocity": velocity,
+                "success_probability": project.get("ai_analysis", {}).get("success_probability", 0.5) * 100,
+                "pledged_percentage": (project["pledged_amount"] / project["goal_amount"]) * 100,
+                "risk_level": project["risk_level"],
+                "category": project["category"]
+            })
+        
+        return {"trends": trend_data}
+    except Exception as e:
+        return {"trends": [], "error": str(e)}
+
+@api_router.post("/alerts/settings", response_model=AlertSettings)
+async def update_alert_settings(settings: AlertSettings):
+    """Update user alert preferences"""
+    try:
+        # In a real app, this would be user-specific
+        await db.alert_settings.replace_one(
+            {"user_id": settings.user_id}, 
+            settings.dict(), 
+            upsert=True
+        )
+        return settings
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to update settings: {e}")
+
+@api_router.get("/alerts/settings", response_model=AlertSettings)
+async def get_alert_settings():
+    """Get current alert settings"""
+    try:
+        settings = await db.alert_settings.find_one({"user_id": "default_user"})
+        if settings:
+            return AlertSettings(**settings)
+        else:
+            # Return default settings
+            return AlertSettings()
+    except Exception as e:
+        return AlertSettings()
+
 # Include the router in the main app
 app.include_router(api_router)
 
