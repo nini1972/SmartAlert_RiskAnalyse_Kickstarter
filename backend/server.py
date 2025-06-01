@@ -186,38 +186,38 @@ async def generate_project_alerts(project: KickstarterProject, settings: AlertSe
     """Generate alerts for promising projects based on user settings"""
     alerts = []
     
-    # Check funding velocity
-    velocity = await calculate_funding_velocity(project)
-    if velocity >= settings.min_funding_velocity * 100:  # Convert to percentage
-        alerts.append(ProjectAlert(
-            project_id=project.id,
-            alert_type="funding_surge",
-            message=f"🚀 {project.name} is funding at {velocity}% per day! This shows strong market interest.",
-            priority="high"
-        ))
-    
-    # Check success probability
-    if project.ai_analysis and project.ai_analysis.get('success_probability', 0) >= settings.min_success_probability:
-        alerts.append(ProjectAlert(
-            project_id=project.id,
-            alert_type="high_potential",
-            message=f"⭐ {project.name} has {project.ai_analysis['success_probability']*100:.0f}% success probability - Consider investing!",
-            priority="medium"
-        ))
-    
-    # Check deadline approaching
-    if hasattr(project.deadline, 'replace'):
-        days_remaining = (project.deadline.replace(tzinfo=None) - datetime.utcnow()).days
-    else:
-        days_remaining = (project.deadline - datetime.utcnow()).days
-    
-    if days_remaining <= 7 and project.status == 'live':
-        alerts.append(ProjectAlert(
-            project_id=project.id,
-            alert_type="deadline_approaching",
-            message=f"⏰ {project.name} ends in {days_remaining} days! Last chance to invest.",
-            priority="medium"
-        ))
+    try:
+        # Check funding velocity
+        velocity = await calculate_funding_velocity(project)
+        if velocity >= settings.min_funding_velocity * 100:  # Convert to percentage
+            alerts.append(ProjectAlert(
+                project_id=project.id,
+                alert_type="funding_surge",
+                message=f"🚀 {project.name} is funding at {velocity}% per day! This shows strong market interest.",
+                priority="high"
+            ))
+        
+        # Check success probability
+        if project.ai_analysis and project.ai_analysis.get('success_probability', 0) >= settings.min_success_probability:
+            alerts.append(ProjectAlert(
+                project_id=project.id,
+                alert_type="high_potential",
+                message=f"⭐ {project.name} has {project.ai_analysis['success_probability']*100:.0f}% success probability - Consider investing!",
+                priority="medium"
+            ))
+        
+        # Check deadline approaching
+        days_remaining = calculate_days_difference(project.deadline, get_utc_now())
+        
+        if days_remaining <= 7 and days_remaining >= 0 and project.status == 'live':
+            alerts.append(ProjectAlert(
+                project_id=project.id,
+                alert_type="deadline_approaching",
+                message=f"⏰ {project.name} ends in {days_remaining} days! Last chance to invest.",
+                priority="medium"
+            ))
+    except Exception as e:
+        logging.error(f"Error generating alerts for project {project.id}: {e}")
     
     return alerts
 
