@@ -688,11 +688,18 @@ async def get_alert_settings():
 # Include the router in the main app
 app.include_router(api_router)
 
+# Configure CORS - Restrict in production
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "https://d2b4b685-66a1-4946-9970-01e9da7727d3.preview.emergentagent.com",
+    # Add your production domain here
+]
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
+    allow_origins=ALLOWED_ORIGINS,  # Restricted origins for security
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
