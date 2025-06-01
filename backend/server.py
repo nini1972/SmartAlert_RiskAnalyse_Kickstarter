@@ -518,13 +518,26 @@ async def get_dashboard_stats():
     }
 
 @api_router.post("/projects/scrape")
-async def scrape_project_data(url: str):
+async def scrape_project_data(request: Dict[str, str]):
     """Scrape basic project data from Kickstarter URL"""
-    scraped_data = await scrape_kickstarter_project(url)
-    if scraped_data:
-        return {"message": "Project data scraped successfully", "data": scraped_data}
-    else:
-        raise HTTPException(status_code=400, detail="Failed to scrape project data")
+    url = request.get('url', '').strip()
+    
+    # Validate URL
+    if not url:
+        raise HTTPException(status_code=400, detail="URL is required")
+    
+    if not re.match(r'^https?://(?:www\.)?kickstarter\.com/', url):
+        raise HTTPException(status_code=400, detail="Invalid Kickstarter URL")
+    
+    try:
+        scraped_data = await scrape_kickstarter_project(url)
+        if scraped_data:
+            return {"message": "Project data scraped successfully", "data": scraped_data}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to scrape project data")
+    except Exception as e:
+        logging.error(f"Scraping error for URL {url}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during scraping")
 
 @api_router.get("/recommendations")
 async def get_ai_recommendations():
