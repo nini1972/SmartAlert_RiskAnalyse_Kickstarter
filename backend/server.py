@@ -439,16 +439,16 @@ async def update_project(project_id: str, project_data: ProjectCreate):
         raise HTTPException(status_code=404, detail="Project not found")
     
     # Update project
-    updated_project = KickstarterProject(**project_data.dict())
+    updated_project = KickstarterProject(**project_data.model_dump())
     updated_project.id = project_id
-    updated_project.updated_at = datetime.utcnow()
+    updated_project.updated_at = get_utc_now()
     
     # Re-analyze with AI
     ai_analysis = await analyze_project_with_ai(updated_project)
-    updated_project.ai_analysis = ai_analysis.dict()
+    updated_project.ai_analysis = ai_analysis.model_dump()
     updated_project.risk_level = ai_analysis.risk_level
     
-    await db.projects.replace_one({'id': project_id}, updated_project.dict())
+    await db.projects.replace_one({'id': project_id}, updated_project.model_dump())
     return updated_project
 
 @api_router.delete("/projects/{project_id}")
