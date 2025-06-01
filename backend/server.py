@@ -397,15 +397,15 @@ async def root():
 
 @api_router.post("/projects", response_model=KickstarterProject)
 async def create_project(project_data: ProjectCreate):
-    project = KickstarterProject(**project_data.dict())
+    project = KickstarterProject(**project_data.model_dump())
     
     # Perform AI analysis
     ai_analysis = await analyze_project_with_ai(project)
-    project.ai_analysis = ai_analysis.dict()
+    project.ai_analysis = ai_analysis.model_dump()
     project.risk_level = ai_analysis.risk_level
     
     # Insert into database
-    result = await db.projects.insert_one(project.dict())
+    result = await db.projects.insert_one(project.model_dump())
     return project
 
 @api_router.get("/projects", response_model=List[KickstarterProject])
