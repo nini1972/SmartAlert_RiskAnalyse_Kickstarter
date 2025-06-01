@@ -664,11 +664,12 @@ async def update_alert_settings(settings: AlertSettings):
         # In a real app, this would be user-specific
         await db.alert_settings.replace_one(
             {"user_id": settings.user_id}, 
-            settings.dict(), 
+            settings.model_dump(), 
             upsert=True
         )
         return settings
     except Exception as e:
+        logging.error(f"Failed to update alert settings: {e}")
         raise HTTPException(status_code=400, detail=f"Failed to update settings: {e}")
 
 @api_router.get("/alerts/settings", response_model=AlertSettings)
