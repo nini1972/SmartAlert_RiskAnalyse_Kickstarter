@@ -468,8 +468,8 @@ async def create_investment(investment_data: InvestmentCreate):
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    investment = Investment(**investment_data.dict())
-    await db.investments.insert_one(investment.dict())
+    investment = Investment(**investment_data.model_dump())
+    await db.investments.insert_one(investment.model_dump())
     return investment
 
 @api_router.get("/investments", response_model=List[Investment])
