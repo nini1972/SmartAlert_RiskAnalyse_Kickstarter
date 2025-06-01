@@ -72,7 +72,7 @@ class KickstarterProject(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str = Field(..., min_length=1, max_length=200)
     creator: str = Field(..., min_length=1, max_length=100)
-    url: str = Field(..., regex=r'^https?://')
+    url: str = Field(..., pattern=r'^https?://')
     description: str = Field(..., min_length=10, max_length=2000)
     category: str = Field(..., min_length=1, max_length=50)
     goal_amount: float = Field(..., gt=0)
@@ -80,8 +80,8 @@ class KickstarterProject(BaseModel):
     backers_count: int = Field(default=0, ge=0)
     deadline: datetime
     launched_date: datetime
-    status: str = Field(..., regex=r'^(live|successful|failed|cancelled)$')
-    risk_level: str = Field(default='medium', regex=r'^(low|medium|high)$')
+    status: str = Field(..., pattern=r'^(live|successful|failed|cancelled)$')
+    risk_level: str = Field(default='medium', pattern=r'^(low|medium|high)$')
     ai_analysis: Optional[Dict[str, Any]] = None
     created_at: datetime = Field(default_factory=get_utc_now)
     updated_at: datetime = Field(default_factory=get_utc_now)
