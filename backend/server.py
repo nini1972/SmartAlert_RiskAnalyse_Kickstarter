@@ -167,18 +167,19 @@ class AnalyticsData(BaseModel):
 async def calculate_funding_velocity(project: KickstarterProject) -> float:
     """Calculate funding velocity as percentage of goal per day"""
     try:
-        if hasattr(project.deadline, 'replace'):
-            days_since_launch = (datetime.utcnow() - project.launched_date.replace(tzinfo=None)).days
-        else:
-            days_since_launch = (datetime.utcnow() - project.launched_date).days
+        days_since_launch = calculate_days_difference(get_utc_now(), project.launched_date)
         
         if days_since_launch <= 0:
             return 0.0
         
+        if project.goal_amount <= 0:
+            return 0.0
+            
         funding_percentage = (project.pledged_amount / project.goal_amount) * 100
         velocity = funding_percentage / days_since_launch
-        return round(velocity, 2)
-    except:
+        return round(max(0.0, velocity), 2)
+    except (AttributeError, TypeError, ZeroDivisionError) as e:
+        logging.error(f"Error calculating funding velocity for project {project.id}: {e}")
         return 0.0
 
 async def generate_project_alerts(project: KickstarterProject, settings: AlertSettings) -> List[ProjectAlert]:
