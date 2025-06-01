@@ -1,11 +1,12 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Query
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import json
 from pathlib import Path
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -19,6 +20,12 @@ import re
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Environment variable validation
+REQUIRED_ENV_VARS = ['MONGO_URL', 'DB_NAME', 'OPENAI_API_KEY']
+missing_vars = [var for var in REQUIRED_ENV_VARS if not os.environ.get(var)]
+if missing_vars:
+    raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
@@ -29,10 +36,15 @@ openai.api_key = os.environ['OPENAI_API_KEY']
 openai_client = openai.OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 
 # Create the main app without a prefix
-app = FastAPI()
+app = FastAPI(title="Kickstarter Investment Tracker", version="1.0.0")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+
+# Configuration constants
+MAX_PROJECTS_LIMIT = 1000
+DEFAULT_PAGE_SIZE = 50
+MAX_PAGE_SIZE = 100
 
 # Define Models
 class KickstarterProject(BaseModel):
