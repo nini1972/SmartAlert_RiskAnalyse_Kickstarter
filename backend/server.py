@@ -409,14 +409,20 @@ async def create_project(project_data: ProjectCreate):
     return project
 
 @api_router.get("/projects", response_model=List[KickstarterProject])
-async def get_projects(category: Optional[str] = None, risk_level: Optional[str] = None):
+async def get_projects(
+    category: Optional[str] = None, 
+    risk_level: Optional[str] = None,
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE, description="Items per page")
+):
     query = {}
     if category:
         query['category'] = category
     if risk_level:
         query['risk_level'] = risk_level
     
-    projects = await db.projects.find(query).to_list(100)
+    skip = (page - 1) * page_size
+    projects = await db.projects.find(query).skip(skip).limit(page_size).to_list(page_size)
     return [KickstarterProject(**project) for project in projects]
 
 @api_router.get("/projects/{project_id}", response_model=KickstarterProject)
