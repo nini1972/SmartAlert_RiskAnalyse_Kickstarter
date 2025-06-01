@@ -70,21 +70,30 @@ def calculate_days_difference(end_date: datetime, start_date: datetime = None) -
 # Define Models
 class KickstarterProject(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
-    creator: str
-    url: str
-    description: str
-    category: str
-    goal_amount: float
-    pledged_amount: float
-    backers_count: int
+    name: str = Field(..., min_length=1, max_length=200)
+    creator: str = Field(..., min_length=1, max_length=100)
+    url: str = Field(..., regex=r'^https?://')
+    description: str = Field(..., min_length=10, max_length=2000)
+    category: str = Field(..., min_length=1, max_length=50)
+    goal_amount: float = Field(..., gt=0)
+    pledged_amount: float = Field(default=0, ge=0)
+    backers_count: int = Field(default=0, ge=0)
     deadline: datetime
     launched_date: datetime
-    status: str  # 'live', 'successful', 'failed', 'cancelled'
-    risk_level: str = 'medium'  # 'low', 'medium', 'high'
+    status: str = Field(..., regex=r'^(live|successful|failed|cancelled)$')
+    risk_level: str = Field(default='medium', regex=r'^(low|medium|high)$')
     ai_analysis: Optional[Dict[str, Any]] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=get_utc_now)
+    updated_at: datetime = Field(default_factory=get_utc_now)
+    
+    @validator('deadline', 'launched_date')
+    def validate_dates(cls, v):
+        if isinstance(v, str):
+            try:
+                return datetime.fromisoformat(v.replace('Z', '+00:00')).replace(tzinfo=None)
+            except ValueError:
+                raise ValueError('Invalid datetime format')
+        return normalize_datetime(v)
 
 class Investment(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
