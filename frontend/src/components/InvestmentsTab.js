@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { BanknotesIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import { useAppContext } from '../context/AppContext';
 
-const InvestmentsTab = () => {
+const InvestmentsTab = memo(() => {
   const { investments, projects, loading, errors } = useAppContext();
 
   if (loading.investments) {
@@ -80,31 +80,10 @@ const InvestmentsTab = () => {
         </div>
         
         {investments.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Project
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Expected Return
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ROI
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Notes
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+          <>
+            {/* Mobile Card View - Hidden on larger screens */}
+            <div className="block md:hidden">
+              <div className="space-y-4 p-4">
                 {investments.map((investment) => {
                   const project = projects.find(p => p.id === investment.project_id);
                   const roi = investment.expected_return && investment.amount 
@@ -112,68 +91,194 @@ const InvestmentsTab = () => {
                     : null;
                   
                   return (
-                    <tr key={investment.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {project?.name || 'Unknown Project'}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {investment.reward_tier || 'No tier specified'}
-                            </div>
-                            {project && (
-                              <div className="text-xs text-gray-400">
-                                {project.category} • {project.status}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 font-medium">
+                    <div key={investment.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-medium text-gray-900 truncate">
+                          {project?.name || 'Unknown Project'}
+                        </h4>
+                        <span className="text-lg font-semibold text-indigo-600">
                           ${investment.amount?.toLocaleString()}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <div className="flex justify-between">
+                          <span>Date:</span>
+                          <span>{format(new Date(investment.investment_date), 'MMM dd, yyyy')}</span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {format(new Date(investment.investment_date), 'MMM dd, yyyy')}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {investment.expected_return 
-                            ? `$${investment.expected_return.toLocaleString()}` 
-                            : 'N/A'
-                          }
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {roi ? (
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            parseFloat(roi) > 0 
-                              ? 'bg-green-100 text-green-800' 
-                              : parseFloat(roi) < 0 
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {roi > 0 ? '+' : ''}{roi}%
-                          </span>
-                        ) : (
-                          <span className="text-sm text-gray-500">N/A</span>
+                        
+                        {investment.expected_return && (
+                          <div className="flex justify-between">
+                            <span>Expected Return:</span>
+                            <span className="font-medium">${investment.expected_return.toLocaleString()}</span>
+                          </div>
                         )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 max-w-xs truncate" title={investment.notes}>
-                          {investment.notes || 'No notes'}
-                        </div>
-                      </td>
-                    </tr>
+                        
+                        {roi && (
+                          <div className="flex justify-between">
+                            <span>ROI:</span>
+                            <span className={`font-medium ${
+                              parseFloat(roi) > 0 ? 'text-green-600' : 
+                              parseFloat(roi) < 0 ? 'text-red-600' : 'text-gray-600'
+                            }`}>
+                              {roi > 0 ? '+' : ''}{roi}%
+                            </span>
+                          </div>
+                        )}
+                        
+                        {investment.reward_tier && (
+                          <div className="flex justify-between">
+                            <span>Tier:</span>
+                            <span className="font-medium">{investment.reward_tier}</span>
+                          </div>
+                        )}
+                        
+                        {project && (
+                          <div className="flex justify-between">
+                            <span>Status:</span>
+                            <span className={`font-medium ${
+                              project.status === 'successful' ? 'text-green-600' :
+                              project.status === 'live' ? 'text-blue-600' :
+                              'text-red-600'
+                            }`}>
+                              {project.status}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {investment.notes && (
+                          <div className="mt-2 pt-2 border-t border-gray-200">
+                            <span className="text-xs text-gray-500">Notes:</span>
+                            <p className="text-sm text-gray-700 mt-1">{investment.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </div>
+
+            {/* Desktop Table View - Hidden on mobile */}
+            <div className="hidden md:block">
+              <div className="table-container overflow-x-auto">
+                <table 
+                  className="min-w-full divide-y divide-gray-200"
+                  role="table"
+                  aria-label="Investment details"
+                >
+                  <thead className="bg-gray-50">
+                    <tr role="row">
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Project
+                      </th>
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Amount
+                      </th>
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Date
+                      </th>
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Expected Return
+                      </th>
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        ROI
+                      </th>
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Notes
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {investments.map((investment) => {
+                      const project = projects.find(p => p.id === investment.project_id);
+                      const roi = investment.expected_return && investment.amount 
+                        ? ((investment.expected_return - investment.amount) / investment.amount * 100).toFixed(1)
+                        : null;
+                      
+                      return (
+                        <tr key={investment.id} className="hover:bg-gray-50" role="row">
+                          <td className="px-6 py-4 whitespace-nowrap" role="cell">
+                            <div className="flex items-center">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {project?.name || 'Unknown Project'}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {investment.reward_tier || 'No tier specified'}
+                                </div>
+                                {project && (
+                                  <div className="text-xs text-gray-400">
+                                    {project.category} • {project.status}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap" role="cell">
+                            <div className="text-sm text-gray-900 font-medium">
+                              ${investment.amount?.toLocaleString()}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap" role="cell">
+                            <div className="text-sm text-gray-900">
+                              {format(new Date(investment.investment_date), 'MMM dd, yyyy')}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap" role="cell">
+                            <div className="text-sm text-gray-900">
+                              {investment.expected_return 
+                                ? `$${investment.expected_return.toLocaleString()}` 
+                                : 'N/A'
+                              }
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap" role="cell">
+                            {roi ? (
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                parseFloat(roi) > 0 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : parseFloat(roi) < 0 
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {roi > 0 ? '+' : ''}{roi}%
+                              </span>
+                            ) : (
+                              <span className="text-sm text-gray-500">N/A</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4" role="cell">
+                            <div className="text-sm text-gray-900 max-w-xs truncate" title={investment.notes}>
+                              {investment.notes || 'No notes'}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         ) : (
           <div className="px-6 py-12 text-center">
             <BanknotesIcon className="mx-auto h-12 w-12 text-gray-400" />
@@ -186,6 +291,8 @@ const InvestmentsTab = () => {
       </div>
     </div>
   );
-};
+});
+
+InvestmentsTab.displayName = 'InvestmentsTab';
 
 export default InvestmentsTab;
