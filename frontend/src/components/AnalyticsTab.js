@@ -1,10 +1,34 @@
-import React from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { ArrowTrendingUpIcon, ChartBarIcon, LightBulbIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAppContext } from '../context/AppContext';
 
-const AnalyticsTab = () => {
+const AnalyticsTab = memo(() => {
   const { advancedAnalytics, fundingTrends, loading, errors } = useAppContext();
+  
+  // Responsive chart dimensions
+  const [chartDimensions, setChartDimensions] = useState({
+    width: '100%',
+    height: 400
+  });
+
+  useEffect(() => {
+    const updateChartDimensions = () => {
+      const screenWidth = window.innerWidth;
+      if (screenWidth < 640) { // Mobile
+        setChartDimensions({ width: '100%', height: 300 });
+      } else if (screenWidth < 768) { // Tablet
+        setChartDimensions({ width: '100%', height: 350 });
+      } else { // Desktop
+        setChartDimensions({ width: '100%', height: 400 });
+      }
+    };
+
+    updateChartDimensions();
+    window.addEventListener('resize', updateChartDimensions);
+    
+    return () => window.removeEventListener('resize', updateChartDimensions);
+  }, []);
 
   if (loading.analytics) {
     return (
@@ -162,29 +186,69 @@ const AnalyticsTab = () => {
               <h3 className="text-lg leading-6 font-medium text-gray-900 mb-6">
                 📈 Funding Velocity vs Success Probability
               </h3>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={fundingTrends}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fontSize: 12 }}
-                    interval={0}
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                  />
-                  <YAxis />
-                  <Tooltip 
-                    formatter={(value, name) => [
-                      `${value.toFixed(1)}${name.includes('Velocity') ? '%/day' : '%'}`, 
-                      name
-                    ]}
-                  />
-                  <Legend />
-                  <Bar dataKey="velocity" fill="#3B82F6" name="Funding Velocity (%/day)" />
-                  <Bar dataKey="success_probability" fill="#10B981" name="Success Probability (%)" />
-                </BarChart>
-              </ResponsiveContainer>
+              
+              {/* Responsive Chart Container */}
+              <div className="w-full" style={{ minHeight: chartDimensions.height }}>
+                <ResponsiveContainer 
+                  width={chartDimensions.width} 
+                  height={chartDimensions.height}
+                >
+                  <BarChart 
+                    data={fundingTrends}
+                    margin={{
+                      top: 20,
+                      right: 30,
+                      left: 20,
+                      bottom: window.innerWidth < 640 ? 80 : 60
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fontSize: window.innerWidth < 640 ? 10 : 12 }}
+                      interval={0}
+                      angle={window.innerWidth < 640 ? -45 : -30}
+                      textAnchor="end"
+                      height={window.innerWidth < 640 ? 80 : 60}
+                    />
+                    <YAxis tick={{ fontSize: window.innerWidth < 640 ? 10 : 12 }} />
+                    <Tooltip 
+                      formatter={(value, name) => [
+                        `${value.toFixed(1)}${name.includes('Velocity') ? '%/day' : '%'}`, 
+                        name
+                      ]}
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '0.375rem',
+                        fontSize: window.innerWidth < 640 ? '12px' : '14px'
+                      }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ fontSize: window.innerWidth < 640 ? '12px' : '14px' }}
+                    />
+                    <Bar 
+                      dataKey="velocity" 
+                      fill="#3B82F6" 
+                      name="Funding Velocity (%/day)"
+                      radius={[2, 2, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="success_probability" 
+                      fill="#10B981" 
+                      name="Success Probability (%)"
+                      radius={[2, 2, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              
+              {/* Chart Description for Screen Readers */}
+              <div className="sr-only" aria-label="Chart description">
+                Bar chart showing funding velocity versus success probability for {fundingTrends.length} projects. 
+                Funding velocity ranges from {Math.min(...fundingTrends.map(t => t.velocity)).toFixed(1)} to {Math.max(...fundingTrends.map(t => t.velocity)).toFixed(1)} percent per day. 
+                Success probability ranges from {Math.min(...fundingTrends.map(t => t.success_probability)).toFixed(1)} to {Math.max(...fundingTrends.map(t => t.success_probability)).toFixed(1)} percent.
+              </div>
             </div>
           </div>
         )}
@@ -227,6 +291,11 @@ const AnalyticsTab = () => {
                 <div 
                   className="bg-green-600 h-2 rounded-full transition-all duration-500"
                   style={{ width: `${(advancedAnalytics.market_sentiment || 0) * 100}%` }}
+                  role="progressbar"
+                  aria-valuenow={(advancedAnalytics.market_sentiment || 0) * 100}
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-label={`Portfolio confidence: ${((advancedAnalytics.market_sentiment || 0) * 100).toFixed(0)}%`}
                 ></div>
               </div>
             </div>
@@ -242,6 +311,11 @@ const AnalyticsTab = () => {
                 <div 
                   className="bg-blue-600 h-2 rounded-full transition-all duration-500"
                   style={{ width: `${(advancedAnalytics.diversification_score || 0) * 100}%` }}
+                  role="progressbar"
+                  aria-valuenow={(advancedAnalytics.diversification_score || 0) * 100}
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-label={`Diversification level: ${((advancedAnalytics.diversification_score || 0) * 100).toFixed(0)}%`}
                 ></div>
               </div>
             </div>
@@ -257,6 +331,11 @@ const AnalyticsTab = () => {
                 <div 
                   className="bg-purple-600 h-2 rounded-full transition-all duration-500"
                   style={{ width: `${Math.min((advancedAnalytics.funding_velocity || 0) * 10, 100)}%` }}
+                  role="progressbar"
+                  aria-valuenow={Math.min((advancedAnalytics.funding_velocity || 0) * 10, 100)}
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-label={`Average funding speed: ${advancedAnalytics.funding_velocity || 0}% per day`}
                 ></div>
               </div>
             </div>
@@ -265,6 +344,8 @@ const AnalyticsTab = () => {
       </div>
     </div>
   );
-};
+});
+
+AnalyticsTab.displayName = 'AnalyticsTab';
 
 export default AnalyticsTab;
