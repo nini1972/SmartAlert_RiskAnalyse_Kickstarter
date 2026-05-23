@@ -14,7 +14,7 @@ import openai
 import asyncio
 import requests
 import re
-# Support both package import (`backend.server`) and script execution (`uvicorn server:app`).
+# Support both package import (`backend.server`) and backend-directory execution (`uvicorn server:app ...`).
 try:
     from .external_integrations.kickstarter import (
         KickstarterScrapedProject,
