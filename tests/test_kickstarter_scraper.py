@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from backend.external_integrations.kickstarter import (
     KickstarterScrapedProject,
@@ -46,5 +47,5 @@ def test_scraped_project_validation_rejects_non_kickstarter_urls():
         "scraped": True,
     }
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         KickstarterScrapedProject(**invalid_payload)

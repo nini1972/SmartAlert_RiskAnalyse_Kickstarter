@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field, ValidationError
 DEFAULT_TIMEOUT_SECONDS = 15
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_CACHE_TTL_SECONDS = 600
+MAX_BACKOFF_SECONDS = 8
 CACHE_DIR = "/tmp/kickstarter_scrape_cache"
 
 
@@ -261,7 +262,7 @@ async def scrape_kickstarter_project(
                 _write_cache(url, fallback)
                 return fallback
         except Exception as exc:
-            backoff = min(2**attempt, 8)
+            backoff = min(2**attempt, MAX_BACKOFF_SECONDS)
             logging.warning(
                 "Kickstarter scrape attempt %s/%s failed for %s: %s",
                 attempt + 1,
