@@ -176,10 +176,12 @@ async def _extract_with_playwright(url: str, timeout_seconds: int) -> Dict[str, 
     try:
         async with async_playwright() as playwright:
             browser = await playwright.chromium.launch(headless=True)
-            page = await browser.new_page()
-            await page.goto(url, wait_until="domcontentloaded", timeout=timeout_seconds * 1000)
-            html = await page.content()
-            await browser.close()
+            try:
+                page = await browser.new_page()
+                await page.goto(url, wait_until="domcontentloaded", timeout=timeout_seconds * 1000)
+                html = await page.content()
+            finally:
+                await browser.close()
             structured = extract_structured_data_from_html(html, url)
             if structured:
                 return structured
