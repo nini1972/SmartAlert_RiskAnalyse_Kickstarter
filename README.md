@@ -1,4 +1,4 @@
-# SmartAlert Risk Analyse Kickstarter
+# SmartAlert Risk Analysis Kickstarter
 
 SmartAlert is a Kickstarter investment and risk tracking app with:
 - **FastAPI backend** (`backend/server.py`)

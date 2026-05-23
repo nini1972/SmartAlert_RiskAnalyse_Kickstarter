@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 import aiohttp
@@ -197,8 +197,8 @@ def _read_cache(url: str, cache_ttl_seconds: int) -> Dict[str, Any]:
     cache_path = _cache_path_for_url(url)
     if not os.path.exists(cache_path):
         return {}
-    modified_at = datetime.fromtimestamp(os.path.getmtime(cache_path))
-    if datetime.utcnow() - modified_at > timedelta(seconds=cache_ttl_seconds):
+    modified_at = datetime.fromtimestamp(os.path.getmtime(cache_path), timezone.utc)
+    if datetime.now(timezone.utc) - modified_at > timedelta(seconds=cache_ttl_seconds):
         return {}
     try:
         with open(cache_path, "r", encoding="utf-8") as cache_file:

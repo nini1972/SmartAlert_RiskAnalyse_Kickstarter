@@ -14,10 +14,16 @@ import openai
 import asyncio
 import requests
 import re
-from external_integrations.kickstarter import (
-    KickstarterScrapedProject,
-    scrape_kickstarter_project,
-)
+try:
+    from .external_integrations.kickstarter import (
+        KickstarterScrapedProject,
+        scrape_kickstarter_project,
+    )
+except ImportError:
+    from external_integrations.kickstarter import (
+        KickstarterScrapedProject,
+        scrape_kickstarter_project,
+    )
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
