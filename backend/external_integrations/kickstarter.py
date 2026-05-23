@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import tempfile
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
@@ -16,7 +17,7 @@ DEFAULT_TIMEOUT_SECONDS = 15
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_CACHE_TTL_SECONDS = 600
 MAX_BACKOFF_SECONDS = 8
-CACHE_DIR = "/tmp/kickstarter_scrape_cache"
+CACHE_DIR = os.path.join(tempfile.gettempdir(), "kickstarter_scrape_cache")
 
 
 class KickstarterScrapedProject(BaseModel):
@@ -224,7 +225,7 @@ async def _fetch_html(url: str, timeout_seconds: int) -> str:
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/122.0.0.0 Safari/537.36"
+            "Safari/537.36"
         )
     }
     async with aiohttp.ClientSession(timeout=timeout) as session:
