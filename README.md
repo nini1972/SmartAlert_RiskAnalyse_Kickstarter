@@ -44,7 +44,7 @@ Additional reliability features:
 - Request timeout handling
 - Retry with exponential backoff
 - Detailed logging of failures
-- Lightweight disk cache (`/tmp/kickstarter_scrape_cache`)
+- Lightweight disk cache in the OS temp directory (for example, `/tmp/kickstarter_scrape_cache` on many Linux systems)
 - Pydantic validation (`KickstarterScrapedProject`) before scraped data is returned by the API
 
 ## Tests
