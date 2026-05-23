@@ -11,11 +11,13 @@ from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timedelta, timezone
 import openai
-import aiohttp
 import asyncio
-from bs4 import BeautifulSoup
 import requests
 import re
+from external_integrations.kickstarter import (
+    KickstarterScrapedProject,
+    scrape_kickstarter_project,
+)
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -362,34 +364,6 @@ async def analyze_project_with_ai(project: KickstarterProject) -> AIAnalysisResu
             creator_credibility=0.5
         )
 
-async def scrape_kickstarter_project(url: str) -> Dict[str, Any]:
-    """Basic Kickstarter project data extraction"""
-    try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers) as response:
-                if response.status == 200:
-                    html = await response.text()
-                    soup = BeautifulSoup(html, 'html.parser')
-                    
-                    # Extract basic project data (simplified)
-                    title = soup.find('h1', class_='type-28')
-                    creator = soup.find('a', class_='grey-dark')
-                    
-                    return {
-                        'name': title.text.strip() if title else 'Unknown Project',
-                        'creator': creator.text.strip() if creator else 'Unknown Creator',
-                        'description': 'Extracted from live project',
-                        'category': 'Technology',
-                        'scraped': True
-                    }
-    except Exception as e:
-        logging.error(f"Scraping failed for {url}: {e}")
-        return {}
-
 # API Routes
 @api_router.get("/")
 async def root():
@@ -532,7 +506,8 @@ async def scrape_project_data(request: Dict[str, str]):
     try:
         scraped_data = await scrape_kickstarter_project(url)
         if scraped_data:
-            return {"message": "Project data scraped successfully", "data": scraped_data}
+            validated_data = KickstarterScrapedProject(**scraped_data).model_dump()
+            return {"message": "Project data scraped successfully", "data": validated_data}
         else:
             raise HTTPException(status_code=400, detail="Failed to scrape project data")
     except Exception as e:
