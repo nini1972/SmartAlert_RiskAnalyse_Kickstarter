@@ -1,8 +1,10 @@
+import asyncio
 from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
+from backend.external_integrations import kickstarter
 from backend.external_integrations.kickstarter import (
     KickstarterScrapedProject,
     extract_structured_data_from_html,
@@ -49,3 +51,18 @@ def test_scraped_project_validation_rejects_non_kickstarter_urls():
 
     with pytest.raises(ValidationError):
         KickstarterScrapedProject(**invalid_payload)
+
+
+def test_scrape_kickstarter_project_rejects_invalid_urls_before_cache_or_network(monkeypatch):
+    def unexpected_read_cache(*args, **kwargs):
+        raise AssertionError("_read_cache should not be called for invalid URLs")
+
+    async def unexpected_fetch_html(*args, **kwargs):
+        raise AssertionError("_fetch_html should not be called for invalid URLs")
+
+    monkeypatch.setattr(kickstarter, "_read_cache", unexpected_read_cache)
+    monkeypatch.setattr(kickstarter, "_fetch_html", unexpected_fetch_html)
+
+    result = asyncio.run(kickstarter.scrape_kickstarter_project("https://example.com/project"))
+
+    assert result == {}

@@ -18,6 +18,7 @@ DEFAULT_MAX_RETRIES = 3
 DEFAULT_CACHE_TTL_SECONDS = 600
 MAX_BACKOFF_SECONDS = 8
 CACHE_DIR = os.path.join(tempfile.gettempdir(), "kickstarter_scrape_cache")
+KICKSTARTER_URL_PATTERN = re.compile(r"^https?://(?:www\.)?kickstarter\.com/")
 
 
 class KickstarterScrapedProject(BaseModel):
@@ -25,7 +26,7 @@ class KickstarterScrapedProject(BaseModel):
     creator: str = Field(min_length=1, max_length=100)
     description: str = Field(min_length=1, max_length=2000)
     category: str = Field(min_length=1, max_length=50)
-    url: str = Field(pattern=r"^https?://(?:www\.)?kickstarter\.com/")
+    url: str = Field(pattern=KICKSTARTER_URL_PATTERN.pattern)
     scraped: bool = True
 
 
@@ -34,6 +35,10 @@ def _safe_text(value: Optional[str], fallback: str) -> str:
         return fallback
     cleaned = str(value).strip()
     return cleaned if cleaned else fallback
+
+
+def _is_valid_kickstarter_url(url: str) -> bool:
+    return bool(KICKSTARTER_URL_PATTERN.match(url))
 
 
 def _extract_creator(value: Any) -> Optional[str]:
@@ -242,6 +247,10 @@ async def scrape_kickstarter_project(
     max_retries: int = DEFAULT_MAX_RETRIES,
     cache_ttl_seconds: int = DEFAULT_CACHE_TTL_SECONDS,
 ) -> Dict[str, Any]:
+    if not _is_valid_kickstarter_url(url):
+        logging.warning("Rejected non-Kickstarter URL for scraping: %s", url)
+        return {}
+
     cached_data = _read_cache(url, cache_ttl_seconds)
     if cached_data:
         return cached_data
