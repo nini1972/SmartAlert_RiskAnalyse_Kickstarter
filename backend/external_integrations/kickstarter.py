@@ -225,7 +225,7 @@ async def _fetch_html(url: str, timeout_seconds: int) -> str:
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Safari/537.36"
+            "Chrome/131.0.0.0 Safari/537.36"
         )
     }
     async with aiohttp.ClientSession(timeout=timeout) as session:
