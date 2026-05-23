@@ -12,7 +12,6 @@ import uuid
 from datetime import datetime, timedelta, timezone
 import openai
 import asyncio
-import requests
 import re
 # Support both package import (`backend.server`) and backend-directory execution (`uvicorn server:app ...`).
 try:
