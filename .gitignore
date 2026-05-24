@@ -68,3 +68,6 @@ __pycache__/
 
 # Android SDK
 android-sdk/
+
+#Ignore vscode AI rules
+.github\instructions\codacy.instructions.md

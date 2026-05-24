@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { AppProvider } from './context/AppContext';
-import ErrorBoundary from './components/ErrorBoundary';
-import Header from './components/Header';
-import Navigation from './components/Navigation';
-import Dashboard from './components/Dashboard';
-import ProjectsTab from './components/ProjectsTab';
-import InvestmentsTab from './components/InvestmentsTab';
-import AlertsTab from './components/AlertsTab';
-import AnalyticsTab from './components/AnalyticsTab';
-import CalendarTab from './components/CalendarTab';
-import AIInsightsTab from './components/AIInsightsTab';
-import AddProjectModal from './components/modals/AddProjectModal';
-import AddInvestmentModal from './components/modals/AddInvestmentModal';
-import AlertSettingsModal from './components/modals/AlertSettingsModal';
+import ErrorBoundary from './components/ui/ErrorBoundary';
+import Header from './components/layout/Header';
+import Navigation from './components/layout/Navigation';
+import Dashboard from './components/features/Dashboard';
+import ProjectsTab from './components/features/ProjectsTab';
+import InvestmentsTab from './components/features/InvestmentsTab';
+import AlertsTab from './components/features/AlertsTab';
+import AnalyticsTab from './components/features/AnalyticsTab';
+import CalendarTab from './components/features/CalendarTab';
+import AIInsightsTab from './components/features/AIInsightsTab';
+import AddProjectModal from './components/ui/AddProjectModal';
+import AddInvestmentModal from './components/ui/AddInvestmentModal';
+import AlertSettingsModal from './components/ui/AlertSettingsModal';
 import './App.css';
 
 function AppContent() {
