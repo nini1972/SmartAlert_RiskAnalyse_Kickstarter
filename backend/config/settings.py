@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     
     # OpenAI configuration
     OPENAI_API_KEY: str = Field(..., env="OPENAI_API_KEY")
+    OPENAI_MODEL: str = Field(default="gpt-4o-mini", env="OPENAI_MODEL")
     
     # API configuration
     API_V1_STR: str = "/api"

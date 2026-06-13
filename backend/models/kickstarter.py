@@ -82,6 +82,16 @@ class AIAnalysisResult(BaseModel):
     funding_velocity: float
     creator_credibility: float
 
+    @validator('risk_level')
+    def validate_risk_level(cls, v):
+        if v not in {'low', 'medium', 'high'}:
+            raise ValueError('risk_level must be low, medium, or high')
+        return v
+
+    @validator('sentiment_score', 'success_probability', 'funding_velocity', 'creator_credibility')
+    def validate_scores(cls, v):
+        return max(0.0, min(float(v), 1.0))
+
 
 class AlertSettings(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
