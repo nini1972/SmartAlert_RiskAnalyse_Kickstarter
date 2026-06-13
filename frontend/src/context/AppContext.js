@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 
 const AppContext = createContext();
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8002';
 
 export const AppProvider = ({ children }) => {
   // Centralized State
@@ -23,7 +23,8 @@ export const AppProvider = ({ children }) => {
     investments: false,
     dashboard: false,
     alerts: false,
-    analytics: false
+    analytics: false,
+    scraping: false
   });
 
   // Error States
@@ -201,6 +202,16 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const previewKickstarterProject = async (url) => {
+    updateLoading('scraping', true);
+    try {
+      const response = await axios.post(`${BACKEND_URL}/api/projects/scrape`, { url });
+      return response.data;
+    } finally {
+      updateLoading('scraping', false);
+    }
+  };
+
   // CRUD Operations
   const addProject = async (projectData) => {
     try {
@@ -308,6 +319,7 @@ export const AppProvider = ({ children }) => {
     fetchAdvancedAnalytics,
     fetchAlertSettings,
     fetchRecommendations,
+    previewKickstarterProject,
     
     // CRUD Operations
     addProject,

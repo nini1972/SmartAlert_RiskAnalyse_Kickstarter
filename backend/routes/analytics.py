@@ -14,8 +14,10 @@ router = APIRouter()
 analytics_service = AnalyticsService()
 
 def get_database():
-    # This is a placeholder - in reality, we'd get this from the app state
-    from backend.server import db
+    try:
+        from backend.server import db
+    except ModuleNotFoundError:
+        from server import db
     return db
 
 @router.get("/dashboard/stats")

@@ -1,7 +1,7 @@
 import React, { memo, useState, useEffect } from 'react';
 import { ArrowTrendingUpIcon, ChartBarIcon, LightBulbIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
 
 const AnalyticsTab = memo(() => {
   const { advancedAnalytics, fundingTrends, loading, errors } = useAppContext();

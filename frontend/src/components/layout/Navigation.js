@@ -8,7 +8,7 @@ import {
   CalendarIcon, 
   LightBulbIcon 
 } from '@heroicons/react/24/outline';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
 
 const Navigation = ({ activeTab, setActiveTab }) => {
   const { alerts } = useAppContext();

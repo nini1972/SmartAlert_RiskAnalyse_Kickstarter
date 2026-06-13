@@ -1,7 +1,7 @@
 import React from 'react';
 import { ClockIcon, BanknotesIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
 
 const Dashboard = () => {
   const { dashboardStats, advancedAnalytics, loading } = useAppContext();

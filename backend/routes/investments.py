@@ -13,9 +13,15 @@ from models.kickstarter import (
 router = APIRouter()
 
 def get_database():
-    # This is a placeholder - in reality, we'd get this from the app state
-    from backend.server import db
+    try:
+        from backend.server import db
+    except ModuleNotFoundError:
+        from server import db
     return db
+
+@router.post("", response_model=Investment, status_code=status.HTTP_201_CREATED)
+async def create_investment_no_slash(investment_data: InvestmentCreate):
+    return await create_investment(investment_data)
 
 @router.post("/", response_model=Investment, status_code=status.HTTP_201_CREATED)
 async def create_investment(investment_data: InvestmentCreate):
@@ -29,6 +35,10 @@ async def create_investment(investment_data: InvestmentCreate):
     investment = Investment(**investment_data.dict())
     await db.investments.insert_one(investment.dict())
     return investment
+
+@router.get("", response_model=List[Investment])
+async def get_investments_no_slash(project_id: Optional[str] = None):
+    return await get_investments(project_id)
 
 @router.get("/", response_model=List[Investment])
 async def get_investments(project_id: Optional[str] = None):

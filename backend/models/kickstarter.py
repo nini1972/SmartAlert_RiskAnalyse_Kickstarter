@@ -60,6 +60,10 @@ class ProjectCreate(BaseModel):
     status: str = 'live'
 
 
+class ProjectScrapeRequest(BaseModel):
+    url: str
+
+
 class InvestmentCreate(BaseModel):
     project_id: str
     amount: float

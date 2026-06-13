@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { BanknotesIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
 
 const InvestmentsTab = memo(() => {
   const { investments, projects, loading, errors } = useAppContext();

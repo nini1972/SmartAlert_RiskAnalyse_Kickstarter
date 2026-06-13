@@ -1,7 +1,7 @@
 import React from 'react';
 import { CalendarIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
 
 const CalendarTab = () => {
   const { projects, loading } = useAppContext();

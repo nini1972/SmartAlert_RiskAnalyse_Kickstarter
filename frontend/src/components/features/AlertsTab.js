@@ -1,7 +1,7 @@
 import React from 'react';
 import { BellIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
 
 const AlertsTab = () => {
   const { alerts, fetchAlerts, loading, errors } = useAppContext();

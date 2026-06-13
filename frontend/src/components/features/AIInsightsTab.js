@@ -1,6 +1,6 @@
 import React from 'react';
 import { LightBulbIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
 
 const AIInsightsTab = () => {
   const { recommendations, fetchRecommendations, loading, errors } = useAppContext();

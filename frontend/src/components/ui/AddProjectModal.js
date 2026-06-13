@@ -3,7 +3,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useAppContext } from '../../context/AppContext';
 
 const AddProjectModal = ({ isOpen, onClose }) => {
-  const { addProject, loading } = useAppContext();
+  const { addProject, loading, previewKickstarterProject } = useAppContext();
   
   // Focus management refs
   const firstInputRef = useRef(null);
@@ -24,53 +24,39 @@ const AddProjectModal = ({ isOpen, onClose }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [isScraping, setIsScraping] = useState(false);
+  const [scrapeError, setScrapeError] = useState('');
 
-  // Focus management and keyboard handling
-  useEffect(() => {
-    if (isOpen) {
-      // Focus first input when modal opens
-      setTimeout(() => {
-        firstInputRef.current?.focus();
-      }, 100);
+  const kickstarterProjectUrlPattern = /^https?:\/\/(?:www\.)?kickstarter\.com\/projects\/[^/?#]+\/[^/?#]+/;
 
-      // Handle ESC key
-      const handleKeyDown = (event) => {
-        if (event.key === 'Escape') {
-          handleClose();
-        }
-        
-        // Trap focus within modal
-        if (event.key === 'Tab') {
-          const focusableElements = modalRef.current?.querySelectorAll(
-            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-          );
-          
-          if (focusableElements) {
-            const firstElement = focusableElements[0];
-            const lastElement = focusableElements[focusableElements.length - 1];
-            
-            if (event.shiftKey && document.activeElement === firstElement) {
-              event.preventDefault();
-              lastElement.focus();
-            } else if (!event.shiftKey && document.activeElement === lastElement) {
-              event.preventDefault();
-              firstElement.focus();
-            }
-          }
-        }
-      };
+  const formatDateInput = (value) => {
+    if (!value) return '';
+    const timestamp = typeof value === 'number' || /^\d+(\.\d+)?$/.test(String(value)) ? Number(value) * 1000 : value;
+    const valueString = String(timestamp);
+    const normalizedValue = /^\d{4}-\d{2}-\d{2}T/.test(valueString) && !/[zZ]|[+-]\d{2}:\d{2}$/.test(valueString)
+      ? `${valueString}Z`
+      : valueString;
+    const date = new Date(normalizedValue);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toISOString().slice(0, 10);
+  };
 
-      document.addEventListener('keydown', handleKeyDown);
-      
-      // Prevent body scroll when modal is open
-      document.body.style.overflow = 'hidden';
-      
-      return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-        document.body.style.overflow = 'unset';
-      };
-    }
-  }, [isOpen]);
+  const applyScrapedProject = (scrapedProject) => {
+    setFormData(prev => ({
+      ...prev,
+      name: scrapedProject.name || prev.name,
+      creator: scrapedProject.creator || prev.creator,
+      url: scrapedProject.url || prev.url,
+      description: scrapedProject.description || prev.description,
+      category: scrapedProject.category || prev.category,
+      goal_amount: scrapedProject.goal_amount ?? prev.goal_amount,
+      pledged_amount: scrapedProject.pledged_amount ?? prev.pledged_amount,
+      backers_count: scrapedProject.backers_count ?? prev.backers_count,
+      deadline: formatDateInput(scrapedProject.deadline) || prev.deadline,
+      launched_date: formatDateInput(scrapedProject.launched_date) || prev.launched_date,
+      status: scrapedProject.status || prev.status
+    }));
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -138,6 +124,8 @@ const AddProjectModal = ({ isOpen, onClose }) => {
       status: 'live'
     });
     setErrors({});
+    setScrapeError('');
+    setIsScraping(false);
     onClose();
   };
 
@@ -145,9 +133,31 @@ const AddProjectModal = ({ isOpen, onClose }) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Clear error when user starts typing
+    if (name === 'url') {
+      setScrapeError('');
+    }
+    
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleFetchProject = async () => {
+    if (!kickstarterProjectUrlPattern.test(formData.url.trim())) {
+      setErrors(prev => ({ ...prev, url: 'Enter a valid Kickstarter project URL' }));
+      return;
+    }
+
+    setIsScraping(true);
+    setScrapeError('');
+    try {
+      const scrapedProject = await previewKickstarterProject(formData.url.trim());
+      applyScrapedProject(scrapedProject);
+    } catch (error) {
+      const message = error.response?.data?.detail || error.message || 'Failed to load project details';
+      setScrapeError(message);
+    } finally {
+      setIsScraping(false);
     }
   };
 
@@ -221,21 +231,31 @@ const AddProjectModal = ({ isOpen, onClose }) => {
 
           <div>
             <label htmlFor="url" className="block text-sm font-medium text-gray-700">Kickstarter URL *</label>
-            <input
-              type="url"
-              id="url"
-              name="url"
-              required
-              value={formData.url}
-              onChange={handleInputChange}
-              className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                errors.url ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="https://www.kickstarter.com/projects/..."
-              aria-describedby={errors.url ? 'url-error' : undefined}
-              aria-invalid={errors.url ? 'true' : 'false'}
-            />
-            {errors.url && <p id="url-error" className="mt-1 text-sm text-red-600" role="alert">{errors.url}</p>}
+            <div className="mt-1 flex gap-2">
+              <input
+                type="url"
+                id="url"
+                name="url"
+                required
+                value={formData.url}
+                onChange={handleInputChange}
+                className={`block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                  errors.url ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="https://www.kickstarter.com/projects/..."
+                aria-describedby={errors.url || scrapeError ? 'url-error' : undefined}
+                aria-invalid={errors.url || scrapeError ? 'true' : 'false'}
+              />
+              <button
+                type="button"
+                onClick={handleFetchProject}
+                disabled={isScraping}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {isScraping ? 'Loading...' : 'Fetch Details'}
+              </button>
+            </div>
+            {(errors.url || scrapeError) && <p id="url-error" className="mt-1 text-sm text-red-600" role="alert">{errors.url || scrapeError}</p>}
           </div>
 
           <div>
@@ -398,7 +418,7 @@ const AddProjectModal = ({ isOpen, onClose }) => {
             </button>
             <button
               type="submit"
-              disabled={loading.projects}
+              disabled={loading.projects || isScraping}
               className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-describedby={loading.projects ? 'submit-status' : undefined}
             >

@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckCircleIcon, ClockIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
 
 const ProjectsTab = () => {
   const { projects, loading, errors } = useAppContext();

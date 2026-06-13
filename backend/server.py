@@ -1,6 +1,7 @@
 """Main application entry point for the Kickstarter Investment Tracker."""
 
 from fastapi import FastAPI
+from motor.motor_asyncio import AsyncIOMotorClient
 from starlette.middleware.cors import CORSMiddleware
 import logging
 
@@ -26,6 +27,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
     allow_origins=settings.cors_origins_list,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
@@ -33,8 +35,11 @@ app.add_middleware(
 # Include routers
 app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 app.include_router(investments.router, prefix="/api/investments", tags=["investments"])
-app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
+app.include_router(analytics.router, prefix="/api", tags=["analytics"])
 app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])
+
+client = AsyncIOMotorClient(settings.MONGO_URL)
+db = client[settings.DB_NAME]
 
 # Root endpoint
 @app.get("/")
@@ -58,5 +63,4 @@ async def startup_event():
 async def shutdown_event():
     """Application shutdown event."""
     logger.info("Shutting down Kickstarter Investment Tracker API")
-    # Close database connection if needed
-    # This would be handled by the database client in a real implementation
+    client.close()

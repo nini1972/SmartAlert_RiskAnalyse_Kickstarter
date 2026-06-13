@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     
     # CORS origins
     BACKEND_CORS_ORIGINS: str = Field(
-        default="http://localhost:3000,https://d2b4b685-66a1-4946-9970-01e9da7727d3.preview.emergentagent.com",
+        default="http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001,https://d2b4b685-66a1-4946-9970-01e9da7727d3.preview.emergentagent.com",
         env="BACKEND_CORS_ORIGINS"
     )
     
