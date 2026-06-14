@@ -5,29 +5,31 @@ import { useAppContext } from '../../context/AppContext';
 const AlertSettingsModal = ({ isOpen, onClose }) => {
   const { alertSettings, updateAlertSettings, loading } = useAppContext();
 
-  const [formData, setFormData] = useState({
-    notification_frequency: 'instant',
-    min_funding_velocity: 0.1,
-    preferred_categories: ['Technology'],
-    max_risk_level: 'medium',
-    min_success_probability: 0.6,
-    browser_notifications: true,
-    email_notifications: false
-  });
+   const [formData, setFormData] = useState({
+     notification_frequency: 'instant',
+     min_funding_velocity: 0.1,
+     preferred_categories: ['Technology'],
+     max_risk_level: 'medium',
+     min_success_probability: 0.6,
+     browser_notifications: true,
+     email_notifications: false,
+     email_address: ''
+   });
 
-  useEffect(() => {
-    if (alertSettings && Object.keys(alertSettings).length > 0) {
-      setFormData({
-        notification_frequency: alertSettings.notification_frequency || 'instant',
-        min_funding_velocity: alertSettings.min_funding_velocity || 0.1,
-        preferred_categories: alertSettings.preferred_categories || ['Technology'],
-        max_risk_level: alertSettings.max_risk_level || 'medium',
-        min_success_probability: alertSettings.min_success_probability || 0.6,
-        browser_notifications: alertSettings.browser_notifications !== false,
-        email_notifications: alertSettings.email_notifications === true
-      });
-    }
-  }, [alertSettings]);
+   useEffect(() => {
+     if (alertSettings && Object.keys(alertSettings).length > 0) {
+       setFormData({
+         notification_frequency: alertSettings.notification_frequency || 'instant',
+         min_funding_velocity: alertSettings.min_funding_velocity || 0.1,
+         preferred_categories: alertSettings.preferred_categories || ['Technology'],
+         max_risk_level: alertSettings.max_risk_level || 'medium',
+         min_success_probability: alertSettings.min_success_probability || 0.6,
+         browser_notifications: alertSettings.browser_notifications !== false,
+         email_notifications: alertSettings.email_notifications === true,
+         email_address: alertSettings.email_address || ''
+       });
+     }
+   }, [alertSettings]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -217,19 +219,42 @@ const AlertSettingsModal = ({ isOpen, onClose }) => {
                 </div>
               </label>
               
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  name="email_notifications"
-                  checked={formData.email_notifications}
-                  onChange={handleInputChange}
-                  className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                />
-                <div>
-                  <span className="text-sm font-medium text-gray-700">Email Notifications</span>
-                  <p className="text-xs text-gray-500">Receive alerts via email (coming soon)</p>
-                </div>
-              </label>
+               <label className="flex items-center space-x-3">
+                 <input
+                   type="checkbox"
+                   name="email_notifications"
+                   checked={formData.email_notifications}
+                   onChange={handleInputChange}
+                   className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                 />
+                 <div>
+                   <span className="text-sm font-medium text-gray-700">Email Notifications</span>
+                   <p className="text-xs text-gray-500">Receive alerts via email</p>
+                 </div>
+               </label>
+               
+               {/* Email Address Input */}
+               <div className={formData.email_notifications ? 'space-y-3' : 'space-y-3 opacity-50'}>
+                 <label className="block text-sm font-medium text-gray-700">
+                   Email Address
+                 </label>
+                 <input
+                   type="email"
+                   name="email_address"
+                   value={formData.email_address}
+                   onChange={handleInputChange}
+                   placeholder="ninicoe0@gmail.com"
+                   className={`block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+                     formData.email_notifications ? '' : 'opacity-50'
+                   }`}
+                   disabled={!formData.email_notifications}
+                 />
+                 {formData.email_address && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email_address) && (
+                   <p className="mt-1 text-sm text-red-500">
+                     Please enter a valid email address
+                   </p>
+                 )}
+               </div>
             </div>
           </div>
 

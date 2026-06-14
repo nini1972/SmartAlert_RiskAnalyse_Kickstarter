@@ -1,9 +1,14 @@
 """Main application entry point for the Kickstarter Investment Tracker."""
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 from starlette.middleware.cors import CORSMiddleware
 import logging
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from config.settings import settings
 from routes import projects, investments, analytics, alerts
@@ -15,12 +20,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Create the main app
+# Rate limiting setup
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version="1.0.0",
     description="A Kickstarter investment and risk tracking application"
 )
+
+# Add rate limiting middleware
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configure CORS
 app.add_middleware(
@@ -46,7 +56,7 @@ db = client[settings.DB_NAME]
 async def root():
     """Root endpoint returning API information."""
     return {
-        "message": "Kickstarter Investment Tracker API",
+        "message": settings.PROJECT_NAME,
         "version": "1.0.0",
         "docs": "/docs"
     }

@@ -103,7 +103,18 @@ class AlertSettings(BaseModel):
     min_success_probability: float = 0.6
     browser_notifications: bool = True
     email_notifications: bool = False
+    email_address: str = ""  # Email address for notifications
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    @validator('email_address')
+    def validate_email(cls, v):
+        # Allow empty email (when notifications are disabled)
+        if v == "":
+            return v
+        # Basic email format validation
+        if "@" not in v or "." not in v.split("@")[-1]:
+            raise ValueError('Invalid email address format')
+        return v
 
 
 class ProjectAlert(BaseModel):
